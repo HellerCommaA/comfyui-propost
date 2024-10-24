@@ -14,15 +14,14 @@ sys.path.append(current_file_directory)
 import filmgrainer.filmgrainer as filmgrainer
 
 # Create the directory for the LUTs
-dir_luts = os.path.join(folder_paths.models_dir, "luts")
-os.makedirs(dir_luts, exist_ok=True)
-folder_paths.folder_names_and_paths["luts"] = ([dir_luts], set(['.cube']))
-
+dir_luts = folder_paths.folder_names_and_paths.get("luts", None)
+existing_list = dir_luts[0]
+folder_paths.folder_names_and_paths["luts"] = (existing_list + [os.path.join(folder_paths.models_dir, "luts")], set(['.cube']))
 
 class ProPostVignette:
     def __init__(self):
         pass
-    
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -48,16 +47,16 @@ class ProPostVignette:
                 }),
             },
         }
- 
+
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ()
- 
+
     FUNCTION = "vignette_image"
- 
+
     #OUTPUT_NODE = False
- 
+
     CATEGORY = "Pro Post/Camera Effects"
- 
+
     def vignette_image(self, image: torch.Tensor, intensity: float, center_x: float, center_y: float):
         batch_size, height, width, _ = image.shape
         result = torch.zeros_like(image)
@@ -70,7 +69,7 @@ class ProPostVignette:
         x = np.linspace(-1, 1, width)
         y = np.linspace(-1, 1, height)
         X, Y = np.meshgrid(x - (2 * center_x - 1), y - (2 * center_y - 1))
-        
+
         # Calculate distances to the furthest corner
         distances_to_corners = [
             np.sqrt((0 - center_x) ** 2 + (0 - center_y) ** 2),
@@ -101,9 +100,9 @@ class ProPostVignette:
         needs_normalization = image.max() > 1
         if needs_normalization:
             image = image.astype(np.float32) / 255
-        
+
         final_image = np.clip(image * vignette[..., np.newaxis], 0, 1)
-        
+
         if needs_normalization:
             final_image = (final_image * 255).astype(np.uint8)
 
@@ -114,7 +113,7 @@ class ProPostFilmGrain:
 
     def __init__(self):
         pass
-    
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -172,16 +171,16 @@ class ProPostFilmGrain:
                 }),
             },
         }
- 
+
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ()
- 
+
     FUNCTION = "filmgrain_image"
- 
+
     #OUTPUT_NODE = False
- 
+
     CATEGORY = "Pro Post/Camera Effects"
- 
+
     def filmgrain_image(self, image: torch.Tensor, gray_scale: bool, grain_type: str, grain_sat: float, grain_power: float, shadows: float, highs: float, scale: float, sharpen: int, src_gamma: float, seed: int):
         batch_size, height, width, _ = image.shape
         result = torch.zeros_like(image)
@@ -202,17 +201,17 @@ class ProPostFilmGrain:
         return (result,)
 
     def apply_filmgrain(self, image, gray_scale, grain_type, grain_sat, grain_power, shadows, highs, scale, sharpen, src_gamma, seed):
-        out_image = filmgrainer.process(image, scale, src_gamma, 
-            grain_power, shadows, highs, grain_type, 
+        out_image = filmgrainer.process(image, scale, src_gamma,
+            grain_power, shadows, highs, grain_type,
             grain_sat, gray_scale, sharpen, seed)
-        
+
         return out_image
 
 
 class ProPostRadialBlur:
     def __init__(self):
         pass
-    
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -249,16 +248,16 @@ class ProPostRadialBlur:
                 }),
             },
         }
- 
+
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ()
- 
+
     FUNCTION = "radialblur_image"
- 
+
     #OUTPUT_NODE = False
- 
+
     CATEGORY = "Pro Post/Blur Effects"
- 
+
     def radialblur_image(self, image: torch.Tensor, blur_strength: float, center_x: float, center_y:float, focus_spread:float, steps: int):
         batch_size, height, width, _ = image.shape
         result = torch.zeros_like(image)
@@ -307,7 +306,7 @@ class ProPostRadialBlur:
 class ProPostDepthMapBlur:
     def __init__(self):
         pass
-    
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -351,10 +350,10 @@ class ProPostDepthMapBlur:
                 }),
             },
         }
- 
+
     RETURN_TYPES = ("IMAGE","MASK")
     RETURN_NAMES = ()
- 
+
     FUNCTION = "depthblur_image"
     DESCRIPTION = """
     blur_strength: Represents the blur strength. This parameter controls the overall intensity of the blur effect; the higher the value, the more blurred the image becomes.
@@ -366,13 +365,13 @@ class ProPostDepthMapBlur:
     steps: Represents the number of steps in the blur process. This parameter determines the calculation precision of the blur effect; the more steps, the finer the blur effect, but this also increases the computational load.
 
     focal_range: Represents the focal range. This parameter is used to adjust the depth range within the focal depth that remains sharp; the larger the value, the wider the area around the focal depth that remains sharp.
-    
+
     mask_blur: Represents the mask blur strength for blurring the depth map. This parameter controls the intensity of the depth map's blur treatment, used for preprocessing the depth map before calculating the final blur effect, to achieve a more natural blur transition.
     """
     #OUTPUT_NODE = False
- 
+
     CATEGORY = "Pro Post/Blur Effects"
- 
+
     def depthblur_image(self, image: torch.Tensor, depth_map: torch.Tensor, blur_strength: float, focal_depth: float, focus_spread:float, steps: int, focal_range: float, mask_blur: int):
         batch_size, height, width, _ = image.shape
         image_result = torch.zeros_like(image)
@@ -434,7 +433,7 @@ class ProPostDepthMapBlur:
 class ProPostApplyLUT:
     def __init__(self):
         pass
-    
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -452,22 +451,22 @@ class ProPostApplyLUT:
                 }),
             },
         }
- 
+
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ()
- 
+
     FUNCTION = "lut_image"
- 
+
     #OUTPUT_NODE = False
- 
+
     CATEGORY = "Pro Post/Color Grading"
- 
+
     def lut_image(self, image: torch.Tensor, lut_name, strength: float, log: bool):
         batch_size, height, width, _ = image.shape
         result = torch.zeros_like(image)
 
         # Read the LUT
-        lut_path = os.path.join(dir_luts, lut_name)
+        lut_path = os.path.join(existing_list[0], lut_name)
         lut = loading_utils.read_lut(lut_path, clip=True)
 
         for b in range(batch_size):
@@ -508,8 +507,8 @@ class ProPostApplyLUT:
         blended_image = (1 - strength) * image + strength * im_array
 
         return blended_image
- 
- 
+
+
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique
 NODE_CLASS_MAPPINGS = {
@@ -519,7 +518,7 @@ NODE_CLASS_MAPPINGS = {
     "ProPostDepthMapBlur": ProPostDepthMapBlur,
     "ProPostApplyLUT": ProPostApplyLUT
 }
- 
+
 # A dictionary that contains the friendly/humanly readable titles for the nodes
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ProPostVignette": "ProPost Vignette",

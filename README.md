@@ -1,5 +1,7 @@
 # ComfyUI ProPost
 
+** This is a fork of digitaljohn's excellent work on [ProPost](https://github.com/digitaljohn/comfyui-propost) with minor fixups for easier integration into SwarmUI. If you are looking to run this standalone in ComfyUI, this is the wrong repository! **
+
 A set of custom ComfyUI nodes for performing basic post-processing effects. These effects can help to take the edge off AI imagery and make them feel more natural. We only have five nodes at the moment, but we plan to add more over time.
 
 ![ComfyUI Screenshot using Pro Post](./examples/propost.jpg)
@@ -7,16 +9,7 @@ A set of custom ComfyUI nodes for performing basic post-processing effects. Thes
 
 ## Installation
 
-The easiest way is using the [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) to install this package. Just search for `propost` and click install.
-
-
-### Manual Installation
-
-- Navigate to the `/ComfyUI/custom_nodes/` folder
-- Run `git clone https://github.com/digitaljohn/comfyui-propost.git`
-- Run `pip install -r requirements.txt`
-- Restart ComfyUI
-
+Install these nodes via the instructions in the [SwarmUI extension here](https://github.com/HellerCommaA/SwarmUI-PostRender).
 
 ## Nodes
 
